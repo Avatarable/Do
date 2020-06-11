@@ -1,0 +1,195 @@
+#: import MDTextField kivymd.uix.textfield.MDTextField
+#: import MDTextFieldRound kivymd.uix.textfield.MDTextFieldRound
+#: import MDFillRoundFlatButton kivymd.uix.button.MDFillRoundFlatButton
+#: import MDIcon kivymd.uix.label.MDIcon
+#: import NavigationLayout kivymd.uix.navigationdrawer.NavigationLayout
+
+WindowManager:
+
+
+
+<Logo@MDIcon>
+    size_hint: None, None
+    pos_hint: {"center_x": .5, "center_y": .5}
+    canvas:
+        Color:
+            rgba: (1, 1, 1, 1) if self.source else (0, 0, 0, 0.4)
+        RoundedRectangle:
+            source: self.source if self.source else None
+            pos: self.pos
+            size: self.size
+            radius: 100, 100, 100, 100
+    halign: "center"
+    icon: "language-python"
+    theme_text_color: "Custom"
+    text_color: 1, 1, 1, 1
+
+<LoginPage>:
+    name: "Login"
+    BoxLayout:
+        size_hint: .8, .8
+        pos_hint: {"center_x": 0.5, "center_y":0.5}
+        spacing: dp(40)
+        orientation: 'vertical'
+
+        Logo:
+            size: (200,200)
+            font_size: 100
+
+        MDTextField:
+            id:email
+            hint_text: "Email"
+            helper_text: "*required"
+            helper_text_mode: "on_focus" # "persistent"
+            required: True
+            text: root.prev_email
+
+        MDTextField:
+            id:passw
+            hint_text: "Password"
+            helper_text: "*required"
+            helper_text_mode: "on_focus" # "persistent"
+            required: True
+            icon_right: 'lock'
+            password: True
+            text: root.prev_passw
+
+        MDFillRoundFlatButton:
+            id: login_btn
+            text: "Login"
+            theme_text_color: 'Custom'
+            md_bg_color: app.theme_cls.primary_color
+            size_hint: 1, None
+            on_release: root.login()
+
+        BoxLayout:
+            col: 1
+            orientation: 'vertical'
+            padding: dp(-15)
+
+            BoxLayout:
+                orientation: "horizontal"
+                MDCheckbox:
+                    id: chkbox
+                    size_hint: None, None
+                    size: dp(40), dp(40)
+                    pos_hint: {"center_x": .07}
+                    active: root.prev_chkbox
+                MDLabel:
+                    text: "Remember me"
+                    size_hint: None, None
+                    size: dp(150), dp(40)
+                    font_size: dp(14)
+                    theme_text_color: 'Custom'
+                    text_color: 0.5,0.5,0.5,1
+
+
+            MDTextButton:
+                text: "Don't have an account? Create one"
+                size_hint: None, None
+                pos_hint: {"center_x": .5, "center_y": .5}
+                on_release: root.reset(); app.root.current = "Signup"
+
+
+
+
+<SignupPage>
+    size_hint: .8, .8
+    pos_hint: {"center_x": 0.5, "center_y":0.5}
+    spacing: dp(20)
+    orientation: 'vertical'
+
+    Logo:
+        size: (120,120)
+        font_size: 70
+
+    MDTextField:
+        id: namee
+        hint_text: "Name"
+        helper_text: "*required"
+        helper_text_mode: "on_focus" # "persistent"
+        required: True
+
+    MDTextField:
+        id: email_su
+        hint_text: "Email"
+        helper_text: "*required"
+        helper_text_mode: "on_focus" # "persistent"
+        required: True
+
+    MDTextField:
+        id: passw_su
+        hint_text: "Password"
+        helper_text: "*required"
+        helper_text_mode: "on_focus" # "persistent"
+        required: True
+        icon_right: 'eye-off'
+        password: True
+
+    MDTextField:
+        id: passw_suc
+        hint_text: "Confirm Password"
+        helper_text: "*required"
+        helper_text_mode: "on_focus" # "persistent"
+        required: True
+        icon_right: 'eye-off'
+        password: True
+
+    MDFillRoundFlatButton:
+        id: signup_btn
+        text: "Signup"
+        theme_text_color: 'Custom'
+        text_color: 1,1,1,1
+        size_hint: 1, 0
+        on_release: root.signup()
+
+    MDTextButton:
+        text: "Already have an account? Login"
+        size_hint: None, None
+        pos_hint: {"center_x": .5, "center_y": .5}
+        on_release: root.reset(); app.root.current = "Login"
+
+<AccountPage>
+    name: "Account"
+
+    NavigationLayout:
+
+        ScreenManager:
+            Screen:
+                MDToolbar:
+                    id: toolbar
+                    title: "Monday Todo List"
+                    pos_hint: {'top': 1}
+                    elevation: 10
+                    left_action_items: [["menu", lambda x: nav_drawer.set_state("open")]]
+                BoxLayout:
+                    size_hint: .8, .8
+                    pos_hint: {"center_x": 0.5, "center_y":0.5}
+                    spacing: dp(30)
+                    orientation: 'vertical'
+
+
+                    ScrollView:
+                        MDList:
+                            id: container
+
+        MDNavigationDrawer:
+            id: nav_drawer
+
+
+
+
+
+
+
+
+<WindowManager>:
+    id: screen_manager
+
+    LoginPage
+
+    Screen:
+        name: "Signup"
+        SignupPage
+
+    AccountPage
