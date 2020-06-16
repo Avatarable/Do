@@ -151,14 +151,17 @@ WindowManager:
 
 <AccountPage>
     name: "Account"
+    id: acct_page
+    content: content
 
     NavigationLayout:
 
         ScreenManager:
+            id: screen_man
             Screen:
                 MDToolbar:
                     id: toolbar
-                    title: "Monday Todo List"
+                    title: "Welcome"
                     pos_hint: {'top': 1}
                     elevation: 10
                     left_action_items: [["menu", lambda x: nav_drawer.set_state("open")]]
@@ -175,12 +178,74 @@ WindowManager:
 
         MDNavigationDrawer:
             id: nav_drawer
+            ContentNavDrawer:
+                id:content
 
 
 
+<ContentNavDrawer>:
+    orientation: "vertical"
+    padding: "20dp"
+    spacing: "8dp"
+
+    AnchorLayout:
+        anchor_x: "left"
+        size_hint_y: None
+        height: avatar.height
+
+        Image:
+            id: avatar
+            size_hint: None, None
+            size: "100dp", "100dp"
+            source: "img.jpg"
+
+    MDLabel:
+        id: account_name
+        font_style: "Button"
+        size_hint_y: None
+        height: self.texture_size[1]
+
+    MDLabel:
+        id: account_email
+        font_style: "Caption"
+        size_hint_y: None
+        height: self.texture_size[1]
+
+    ScrollView:
+        DrawerList:
+            id:md_list
+            OneLineIconListItem:
+                text: "New List"
+                on_press: root.new_list()
+                IconLeftWidget:
+                    icon: "plus-box"
+                    on_press: root.new_list()
 
 
 
+<ItemDrawer>:
+    theme_text_color: "Custom"
+    on_press: self.parent.set_color_item(self)
+    theme_text_color: "Custom"
+    text_color: root.text_color
+
+
+<ListScreen>
+    MDToolbar:
+        id: list_toolbar
+        title: "Welcome"
+        pos_hint: {'top': 1}
+        elevation: 10
+        left_action_items: [["menu", lambda x: nav_drawer.set_state("open")]]
+    BoxLayout:
+        size_hint: .8, .8
+        pos_hint: {"center_x": 0.5, "center_y":0.5}
+        spacing: dp(30)
+        orientation: 'vertical'
+
+        ScrollView:
+            MDList:
+                id: list_content
 
 
 <WindowManager>:

@@ -1,16 +1,17 @@
-from kivy.app import App
+from kivy.properties import ObjectProperty, StringProperty
 from kivymd.app import MDApp
-from kivymd.uix.label import MDLabel
-from kivymd.theming import ThemeManager, ThemableBehavior
-from kivy.uix.screenmanager import Screen, ScreenManager
-from kivy.clock import Clock
-from kivy.uix.popup import Popup
+import os
+import re
+
 from kivy.uix.boxlayout import BoxLayout
-from kivy.core.window import Window
-from database import Database
+from kivy.uix.popup import Popup
+from kivy.uix.screenmanager import Screen, ScreenManager
+from kivymd.app import MDApp
+from kivymd.theming import ThemableBehavior
+from kivymd.uix.label import MDLabel
 from kivymd.uix.list import MDList, OneLineListItem
 
-import re, os
+from database import Database
 
 
 class LoginPage(Screen):
@@ -98,15 +99,18 @@ class SignupPage(BoxLayout):
         self.ids.passw_suc.text = ""
         self.ids.namee.text = ""
 
+
 class AccountPage(Screen):
     detail = ""
     selected = []
+    password = ""
+    content = ObjectProperty(None)
 
     def on_enter(self, *args):
         password, name, date = db.get_user(self.detail)
-        # self.ids.name_lbl.text = "Account name: "+name
-        # self.ids.email_lbl.text = "Email: "+self.detail
-        # self.ids.date_lbl.text = "Date created: "+date
+        self.content.ids.account_name.text = name
+        self.content.ids.account_email.text = self.detail
+        self.content.load_list()
 
         for i in range(10):
             self.ids.container.add_widget(
@@ -127,6 +131,55 @@ class AccountPage(Screen):
         print("presseddd", item.text)
 
 
+class ContentNavDrawer(BoxLayout):
+    listas = {
+        "Monday": "2020-06-09",
+        "Practise": "2020-07-15",
+        "Market": "2020-07-16",
+    }
+
+    def load_list(self):
+        for list_name in self.listas.keys():
+            self.ids.md_list.add_widget(
+                ItemDrawer(text=list_name)
+            )
+            self.ids.md_list.add_screen(list_name)
+
+
+class ItemDrawer(OneLineListItem):
+    pass
+
+class DrawerList(ThemableBehavior, MDList):
+    def set_color_item(self, instance_item):
+        '''Called when tap on a menu item.'''
+
+        # Set the color of the icon and text for the menu item.
+        for item in self.children:
+            if item.text_color == self.theme_cls.primary_color:
+                item.text_color = self.theme_cls.text_color
+                break
+        instance_item.text_color = self.theme_cls.primary_color
+
+    def add_screen(self, list_name):
+        scr = ListScreen()
+        # self.parent.screen_man.add_widget(scr)
+        # self.parent.screen_man.current = list_name
+
+
+class ListScreen(Screen):
+    pass
+
+
+
+
+
+
+
+
+
+
+
+
 class WindowManager(ScreenManager):
     pass
 
@@ -144,6 +197,7 @@ class MainApp(MDApp):
         self.theme_cls.primary_palette = 'Green'
         self.theme_cls.accent_palette = 'Blue'
         self.theme_cls.theme_style = 'Dark'
+
 
 
 
