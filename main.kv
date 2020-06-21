@@ -158,6 +158,7 @@ WindowManager:
 
         ScreenManager:
             id: screen_man
+            master: acct_page
             Screen:
                 MDToolbar:
                     id: toolbar
@@ -171,15 +172,16 @@ WindowManager:
                     spacing: dp(30)
                     orientation: 'vertical'
 
-
                     ScrollView:
                         MDList:
                             id: container
+
 
         MDNavigationDrawer:
             id: nav_drawer
             ContentNavDrawer:
                 id:content
+                master: acct_page
 
 
 
@@ -221,11 +223,88 @@ WindowManager:
                     icon: "plus-box"
                     on_press: root.new_list()
 
+<Content>
+    orientation: "vertical"
+    spacing: "12dp"
+    size_hint_y: None
+    height: "120dp"
 
+    MDTextField:
+        hint_text: "Title"
+
+<NewDialog@Dialog>:
+    MDCard:
+        orientation: "vertical"
+        size_hint_y: None
+        height: self.minimum_height
+        elevation: 12
+        md_bg_color: 0, 0, 0, 0
+        padding: "24dp", "24dp", "8dp", "8dp"
+
+        canvas:
+            Color:
+                rgba: root.theme_cls.bg_dark
+            RoundedRectangle:
+                pos: self.pos
+                size: self.size
+                radius: root.radius
+
+        MDLabel:
+            id: title
+            text: root.title
+            font_style: "H6"
+            theme_text_color: "Custom"
+            text_color: 0.8,0.8,0.8,1
+            bold: True
+            markup: True
+            size_hint_y: None
+            height: self.texture_size[1]
+            valign: "top"
+
+        BoxLayout:
+            id: spacer_top_box
+            size_hint_y: None
+            height: root._spacer_top
+
+        MDLabel:
+            id: text
+            text: root.text
+            font_style: "Body1"
+            theme_text_color: "Custom"
+            text_color: root.theme_cls.disabled_hint_text_color
+            size_hint_y: None
+            height: self.texture_size[1]
+            markup: True
+
+        ScrollView:
+            id: scroll
+            size_hint_y: None
+            height: root._scroll_height
+
+            MDGridLayout:
+                id: box_items
+                adaptive_height: True
+                cols: 1
+
+        BoxLayout:
+            id: spacer_bottom_box
+            size_hint_y: None
+            height: self.minimum_height
+
+        AnchorLayout:
+            id: root_button_box
+            size_hint_y: None
+            height: "52dp"
+            anchor_x: "right"
+
+            MDBoxLayout:
+                id: button_box
+                adaptive_size: True
+                spacing: "8dp"
 
 <ItemDrawer>:
     theme_text_color: "Custom"
-    on_press: self.parent.set_color_item(self)
+    on_press: self.parent.actions(self)
     theme_text_color: "Custom"
     text_color: root.text_color
 
@@ -233,10 +312,10 @@ WindowManager:
 <ListScreen>
     MDToolbar:
         id: list_toolbar
-        title: "Welcome"
+        title: root.name
         pos_hint: {'top': 1}
         elevation: 10
-        left_action_items: [["menu", lambda x: nav_drawer.set_state("open")]]
+        left_action_items: [["menu", lambda x: root.openNav()]]
     BoxLayout:
         size_hint: .8, .8
         pos_hint: {"center_x": 0.5, "center_y":0.5}

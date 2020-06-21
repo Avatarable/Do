@@ -1,3 +1,5 @@
+import datetime
+
 from kivy.properties import ObjectProperty, StringProperty
 from kivymd.app import MDApp
 import os
@@ -8,8 +10,11 @@ from kivy.uix.popup import Popup
 from kivy.uix.screenmanager import Screen, ScreenManager
 from kivymd.app import MDApp
 from kivymd.theming import ThemableBehavior
+from kivymd.uix.button import MDFlatButton
+from kivymd.uix.textfield import MDTextField
 from kivymd.uix.label import MDLabel
 from kivymd.uix.list import MDList, OneLineListItem
+from kivymd.uix.dialog import MDDialog
 
 from database import Database
 
@@ -112,9 +117,9 @@ class AccountPage(Screen):
         self.content.ids.account_email.text = self.detail
         self.content.load_list()
 
-        for i in range(10):
-            self.ids.container.add_widget(
-                OneLineListItem(text=f"Single-line item {i}", on_release=self.pressed))
+        # for i in range(10):
+        #     self.ids.container.add_widget(
+        #         OneLineListItem(text=f"Single-line item {i}", on_release=self.pressed))
 
     def pressed(self, item):
         self.set_color_item(item)
@@ -131,26 +136,74 @@ class AccountPage(Screen):
         print("presseddd", item.text)
 
 
+class Content(BoxLayout):
+    pass
+class NewDialog(MDDialog):
+    pass
+
 class ContentNavDrawer(BoxLayout):
+    dialog = None
+    master = ObjectProperty(None)
     listas = {
         "Monday": "2020-06-09",
         "Practise": "2020-07-15",
         "Market": "2020-07-16",
     }
 
+    def new_list(self):
+        self.list_name_dialog()
+
     def load_list(self):
-        for list_name in self.listas.keys():
-            self.ids.md_list.add_widget(
-                ItemDrawer(text=list_name)
+        if len(self.listas) > 0:
+            for list_name in self.listas.keys():
+                self.ids.md_list.add_widget(
+                    ItemDrawer(text=list_name)
+                )
+                self.add_screen(list_name)
+
+    def list_name_dialog(self):
+        if not self.dialog:
+            self.dialog = NewDialog(
+                title="Add New List",
+                type="custom",
+                content_cls=Content(),
+                buttons=[
+                    MDFlatButton(text="Cancel", text_color=login_app.theme_cls.primary_color, on_release=self.closeDialog),
+                    MDFlatButton(text="Ok", text_color=login_app.theme_cls.primary_color, on_release=self.add)
+                ]
+
             )
-            self.ids.md_list.add_screen(list_name)
+            self.dialog.set_normal_height()
+            self.dialog.open()
+
+    def add(self, inst):
+        for obj in self.dialog.content_cls.children:
+            if isinstance(obj, MDTextField):
+                self.listas[obj.text] = datetime.datetime.now().strftime("%Y-%m-%d")
+                self.ids.md_list.add_widget(ItemDrawer(text=obj.text))
+                self.add_screen(obj.text)
+                self.master.ids.nav_drawer.set_state("close")
+                self.master.ids.screen_man.current = obj.text
+        self.dialog.dismiss()
+        self.dialog = None
+
+    def add_screen(self, titlee):
+        scr = ListScreen(name=titlee)
+        self.master.ids.screen_man.add_widget(scr)
+
+
+
+    def closeDialog(self, inst):
+        self.dialog.dismiss()
+        self.dialog = None
+
 
 
 class ItemDrawer(OneLineListItem):
     pass
 
 class DrawerList(ThemableBehavior, MDList):
-    def set_color_item(self, instance_item):
+    def actions(self, instance_item):
         '''Called when tap on a menu item.'''
 
         # Set the color of the icon and text for the menu item.
@@ -160,14 +213,16 @@ class DrawerList(ThemableBehavior, MDList):
                 break
         instance_item.text_color = self.theme_cls.primary_color
 
-    def add_screen(self, list_name):
-        scr = ListScreen()
-        # self.parent.screen_man.add_widget(scr)
-        # self.parent.screen_man.current = list_name
+        # close nav_drawer and switch screen
+        self.parent.parent.master.ids.nav_drawer.set_state("close")
+        self.parent.parent.master.ids.screen_man.current = instance_item.text
+
 
 
 class ListScreen(Screen):
-    pass
+    def openNav(self):
+        self.parent.master.ids.nav_drawer.set_state("open")
+
 
 
 
@@ -191,12 +246,29 @@ def warning(title, msg):
     pop.open()
 
 
+
 class MainApp(MDApp):
+    dialog = None
     def build(self):
         # return Builder.load_file("main.kv")
         self.theme_cls.primary_palette = 'Green'
         self.theme_cls.accent_palette = 'Blue'
         self.theme_cls.theme_style = 'Dark'
+
+    def show_alert_dialog(self):
+        if not self.dialog:
+            self.dialog = MDDialog(
+                text="Discard draft?",
+                buttons=[
+                    MDFlatButton(
+                        text="CANCEL", text_color=self.theme_cls.primary_color
+                    ),
+                    MDFlatButton(
+                        text="DISCARD", text_color=self.theme_cls.primary_color
+                    ),
+                ],
+            )
+        self.dialog.open()
 
 
 
