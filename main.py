@@ -115,6 +115,16 @@ class AccountPage(Screen):
         password, name, date = db.get_user(self.detail)
         self.content.ids.account_name.text = name
         self.content.ids.account_email.text = self.detail
+        self.content.listas = {
+            "Monday": "2020-06-09",
+            "Practise": "2020-07-15",
+            "Market": "2020-07-16",
+        }
+        self.content.data = {
+            "Monday": ["buy bread", "eat akara"],
+            "Practise": ["sleep a bit", "learn dance", "wash clothes"],
+            "Market": ["play games"]
+        }
         self.content.load_list()
 
         # for i in range(10):
@@ -144,11 +154,8 @@ class NewDialog(MDDialog):
 class ContentNavDrawer(BoxLayout):
     dialog = None
     master = ObjectProperty(None)
-    listas = {
-        "Monday": "2020-06-09",
-        "Practise": "2020-07-15",
-        "Market": "2020-07-16",
-    }
+    listas = {}
+    data = {}
 
     def new_list(self):
         self.list_name_dialog()
@@ -188,7 +195,7 @@ class ContentNavDrawer(BoxLayout):
         self.dialog = None
 
     def add_screen(self, titlee):
-        scr = ListScreen(name=titlee)
+        scr = ListScreen(name=titlee, lists=self.data[titlee])
         self.master.ids.screen_man.add_widget(scr)
 
 
@@ -220,11 +227,54 @@ class DrawerList(ThemableBehavior, MDList):
 
 
 class ListScreen(Screen):
+    lists = ObjectProperty(None)
+    selected = []
+    selected_item = ""
+
+    def on_enter(self, *args):
+        for item in self.lists:
+            self.ids.list_content.add_widget(
+                OneLineListItem(text=f"{item}", on_release=self.pressed))
+
     def openNav(self):
         self.parent.master.ids.nav_drawer.set_state("open")
 
+    def pressed(self, item):
+        self.selected_item = item.text
+        self.set_color_item(item)
+        self.ids.upd_btn.disabled = False
+        self.ids.del_btn.disabled = False
 
+    def set_color_item(self, item):
+        if len(self.selected) > 0:
+            for i in self.selected:
+                i.theme_text_color='Custom'
+                i.text_color=(1,1,1,1)
+        self.selected.clear()
+        item.theme_text_color='Custom'
+        item.text_color=login_app.theme_cls.primary_color
+        self.selected.append(item)
+        print("presseddd", item.text)
 
+    def add_item(self):
+        if self.ids.item_input.text:
+            item = self.ids.item_input.text
+            self.ids.list_content.add_widget(
+                OneLineListItem(text=f"{item}", on_release=self.pressed))
+            self.ids.item_input.text = ""
+
+    def upd_item(self):
+        if self.ids.item_input.text:
+            item = self.ids.item_input.text
+            self.selected[0].text = item
+            self.ids.item_input.text = ""
+            self.ids.upd_btn.disabled = True
+            self.ids.del_btn.disabled = True
+
+    def del_item(self):
+        self.ids.list_content.remove_widget(self.selected[0])
+        self.ids.del_btn.disabled = True
+        self.ids.upd_btn.disabled = True
 
 
 

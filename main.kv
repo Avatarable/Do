@@ -320,7 +320,49 @@ WindowManager:
         size_hint: .8, .8
         pos_hint: {"center_x": 0.5, "center_y":0.5}
         spacing: dp(30)
+        padding: 0, dp(20), 0, 0
         orientation: 'vertical'
+
+        MDTextField:
+            id: item_input
+            hint_text: "Item/Task"
+            helper_text: "*required"
+            helper_text_mode: "on_focus" # "persistent"
+
+        BoxLayout:
+            orientation: 'horizontal'
+            pos_hint: {"center_x": 0.5, "center_y":1}
+            size_hint: 1, None
+            size: 0, dp(20)
+            padding: 0, dp(40), 0, 0
+            spacing: 10
+
+            MDFillRoundFlatButton:
+                id: add_btn
+                text: "add"
+                theme_text_color: 'Custom'
+                text_color: 1,1,1,1
+                size_hint: 1, 0
+                on_release: root.add_item()
+
+            MDFillRoundFlatButton:
+                id: upd_btn
+                text: "update"
+                theme_text_color: 'Custom'
+                text_color: 1,1,1,1
+                size_hint: 1, 0
+                margin: dp(10), 0, dp(10), 0
+                on_release: root.upd_item()
+                disabled: True
+
+            MDFillRoundFlatButton:
+                id: del_btn
+                text: "delete"
+                theme_text_color: 'Custom'
+                text_color: 1,1,1,1
+                size_hint: 1, 0
+                on_release: root.del_item()
+                disabled: True
 
         ScrollView:
             MDList:
