@@ -160,12 +160,14 @@ WindowManager:
             id: screen_man
             master: acct_page
             Screen:
+                name: "main"
                 MDToolbar:
                     id: toolbar
                     title: "Welcome"
                     pos_hint: {'top': 1}
                     elevation: 10
                     left_action_items: [["menu", lambda x: nav_drawer.set_state("open")]]
+                    right_action_items: [["logout", lambda x: root.logout()]]
                 BoxLayout:
                     size_hint: .8, .8
                     pos_hint: {"center_x": 0.5, "center_y":0.5}
@@ -185,7 +187,9 @@ WindowManager:
 
 
 
+
 <ContentNavDrawer>:
+    list_instance:md_list.list_instance
     orientation: "vertical"
     padding: "20dp"
     spacing: "8dp"
@@ -316,6 +320,7 @@ WindowManager:
         pos_hint: {'top': 1}
         elevation: 10
         left_action_items: [["menu", lambda x: root.openNav()]]
+        right_action_items: [["delete", lambda x: root.show_alert_dialog()],["logout", lambda x: root.logout()]]
     BoxLayout:
         size_hint: .8, .8
         pos_hint: {"center_x": 0.5, "center_y":0.5}

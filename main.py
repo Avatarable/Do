@@ -15,8 +15,10 @@ from kivymd.uix.textfield import MDTextField
 from kivymd.uix.label import MDLabel
 from kivymd.uix.list import MDList, OneLineListItem
 from kivymd.uix.dialog import MDDialog
+from kivymd.toast import toast
 
 from database import Database
+from dbase import Account
 
 
 class LoginPage(Screen):
@@ -58,6 +60,7 @@ class LoginPage(Screen):
 
                 self.reset()        #reset fields
                 login_app.root.current = "Account"      #change screen
+
             else:
                 warning('Invalid Login', 'Incorrect email or password')
         else:
@@ -110,21 +113,29 @@ class AccountPage(Screen):
     selected = []
     password = ""
     content = ObjectProperty(None)
+    acct = ObjectProperty(None)
 
     def on_enter(self, *args):
         password, name, date = db.get_user(self.detail)
         self.content.ids.account_name.text = name
         self.content.ids.account_email.text = self.detail
-        self.content.listas = {
-            "Monday": "2020-06-09",
-            "Practise": "2020-07-15",
-            "Market": "2020-07-16",
-        }
-        self.content.data = {
-            "Monday": ["buy bread", "eat akara"],
-            "Practise": ["sleep a bit", "learn dance", "wash clothes"],
-            "Market": ["play games"]
-        }
+
+        self.acct = Account(self.detail)         # initialize account db
+
+        tables = self.acct.load_tables()
+        if tables:
+            self.content.listas = tables
+
+            for table in tables:
+                datum = self.acct.load(table)
+                self.content.data[table] = datum
+
+        # self.content.data = {
+        #     "Monday": ["buy bread", "learn dance"],
+        #     "Practise": ["code", "sleep", "eat", "repeat"],
+        #     "Leisure": ["play games"]
+        # }
+
         self.content.load_list()
 
         # for i in range(10):
@@ -143,7 +154,11 @@ class AccountPage(Screen):
         item.theme_text_color='Custom'
         item.text_color=login_app.theme_cls.primary_color
         self.selected.append(item)
-        print("presseddd", item.text)
+
+    def logout(self):
+        self.parent.master.acct.db.commit()
+        self.acct.db.close()
+        login_app.root.current = "Login"
 
 
 class Content(BoxLayout):
@@ -154,25 +169,29 @@ class NewDialog(MDDialog):
 class ContentNavDrawer(BoxLayout):
     dialog = None
     master = ObjectProperty(None)
-    listas = {}
+    list_instance = ObjectProperty(None)
+    listas = []
     data = {}
+    populate = False
 
     def new_list(self):
         self.list_name_dialog()
 
     def load_list(self):
-        if len(self.listas) > 0:
-            for list_name in self.listas.keys():
+        if len(self.listas)>0 and not self.populate:
+            for list_name in self.listas:
                 self.ids.md_list.add_widget(
                     ItemDrawer(text=list_name)
                 )
                 self.add_screen(list_name)
+        self.populate = True
 
     def list_name_dialog(self):
         if not self.dialog:
             self.dialog = NewDialog(
                 title="Add New List",
                 type="custom",
+                # on_dismiss=lambda x: self.setDialog(),
                 content_cls=Content(),
                 buttons=[
                     MDFlatButton(text="Cancel", text_color=login_app.theme_cls.primary_color, on_release=self.closeDialog),
@@ -184,32 +203,44 @@ class ContentNavDrawer(BoxLayout):
             self.dialog.open()
 
     def add(self, inst):
+        list_name= ""
         for obj in self.dialog.content_cls.children:
             if isinstance(obj, MDTextField):
-                self.listas[obj.text] = datetime.datetime.now().strftime("%Y-%m-%d")
-                self.ids.md_list.add_widget(ItemDrawer(text=obj.text))
-                self.add_screen(obj.text)
-                self.master.ids.nav_drawer.set_state("close")
-                self.master.ids.screen_man.current = obj.text
-        self.dialog.dismiss()
-        self.dialog = None
+                if len(obj.text.strip())>0:
+                    self.listas.append(obj.text)
+                    self.ids.md_list.add_widget(ItemDrawer(text=obj.text))
+                    self.add_screen(obj.text)
+                    self.master.ids.nav_drawer.set_state("close")
+                    self.master.ids.screen_man.current = obj.text
+                    list_name = obj.text
+                    self.dialog.dismiss()
+
+                    try:
+                        self.master.acct.create(list_name)      # create table in db
+                    except:
+                        login_app.show_alert_dialog("Unsuccessful", "Cannot be added")
+
+                    self.dialog = None
+                else:
+                    login_app.show_toast("Title cannot be empty")
 
     def add_screen(self, titlee):
-        scr = ListScreen(name=titlee, lists=self.data[titlee])
+        if titlee in self.data.keys():
+            scr = ListScreen(name=titlee, lists=self.data[titlee])
+        else:
+            scr = ListScreen(name=titlee, lists=[])
         self.master.ids.screen_man.add_widget(scr)
-
-
 
     def closeDialog(self, inst):
         self.dialog.dismiss()
         self.dialog = None
 
 
-
 class ItemDrawer(OneLineListItem):
     pass
 
 class DrawerList(ThemableBehavior, MDList):
+    list_instance = ObjectProperty(None)
     def actions(self, instance_item):
         '''Called when tap on a menu item.'''
 
@@ -222,22 +253,29 @@ class DrawerList(ThemableBehavior, MDList):
 
         # close nav_drawer and switch screen
         self.parent.parent.master.ids.nav_drawer.set_state("close")
+        self.list_instance = instance_item                                 # stores selected list
         self.parent.parent.master.ids.screen_man.current = instance_item.text
 
 
 
 class ListScreen(Screen):
+
     lists = ObjectProperty(None)
     selected = []
     selected_item = ""
+    populate =  False
+    dialog = None
 
     def on_enter(self, *args):
-        for item in self.lists:
-            self.ids.list_content.add_widget(
-                OneLineListItem(text=f"{item}", on_release=self.pressed))
+        if self.lists and not self.populate:
+            for item in self.lists:
+                self.ids.list_content.add_widget(
+                    OneLineListItem(text=f"{item}", on_release=self.pressed))
+        self.populate = True
 
     def openNav(self):
         self.parent.master.ids.nav_drawer.set_state("open")
+        self.parent.parent.ids.dialog = None
 
     def pressed(self, item):
         self.selected_item = item.text
@@ -254,28 +292,67 @@ class ListScreen(Screen):
         item.theme_text_color='Custom'
         item.text_color=login_app.theme_cls.primary_color
         self.selected.append(item)
-        print("presseddd", item.text)
 
     def add_item(self):
         if self.ids.item_input.text:
             item = self.ids.item_input.text
+            self.parent.master.acct.insert(self.name, item)     # insert into db
+            self.parent.master.acct.db.commit()
             self.ids.list_content.add_widget(
                 OneLineListItem(text=f"{item}", on_release=self.pressed))
             self.ids.item_input.text = ""
+        else:
+            login_app.show_toast("Field cannot be empty")
 
     def upd_item(self):
         if self.ids.item_input.text:
             item = self.ids.item_input.text
+            self.parent.master.acct.update(self.name, self.selected[0].text, item)     # update row in db
+            self.parent.master.acct.db.commit()
             self.selected[0].text = item
             self.ids.item_input.text = ""
             self.ids.upd_btn.disabled = True
             self.ids.del_btn.disabled = True
+        else:
+            login_app.show_toast("Field cannot be empty")
 
     def del_item(self):
+        self.parent.master.acct.delete(self.name, self.selected[0].text)     # delete from db
+        self.parent.master.acct.db.commit()
         self.ids.list_content.remove_widget(self.selected[0])
         self.ids.del_btn.disabled = True
         self.ids.upd_btn.disabled = True
 
+    def logout(self):
+        self.parent.master.acct.db.commit()
+        self.parent.master.acct.db.close()
+        login_app.root.current = "Login"
+
+    def show_alert_dialog(self):
+        if not self.dialog:
+            self.dialog = MDDialog(
+                title="Delete List",
+                text=f"Permanently delete {self.name} list",
+                buttons=[
+                    MDFlatButton(
+                        text="CANCEL", text_color=login_app.theme_cls.primary_color
+                    ),
+                    MDFlatButton(
+                        text="OK", text_color=login_app.theme_cls.primary_color, on_release=self.delete_list
+                    ),
+                ],
+            )
+            self.dialog.set_normal_height()
+            self.dialog.open()
+
+    def delete_list(self, inst):
+        self.parent.master.ids.screen_man.current = "main"
+        self.parent.master.acct.drop(self.name)
+        self.parent.master.ids.content.ids.md_list.remove_widget(self.parent.master.ids.content.list_instance)
+        self.parent.master.ids.screen_man.remove_widget(self)
+        self.dialog.dismiss()
+
+        self.dialog = None
 
 
 
@@ -299,32 +376,23 @@ def warning(title, msg):
 
 class MainApp(MDApp):
     dialog = None
+    confirm = False
+    the_class = None
+
     def build(self):
         # return Builder.load_file("main.kv")
         self.theme_cls.primary_palette = 'Green'
         self.theme_cls.accent_palette = 'Blue'
         self.theme_cls.theme_style = 'Dark'
 
-    def show_alert_dialog(self):
-        if not self.dialog:
-            self.dialog = MDDialog(
-                text="Discard draft?",
-                buttons=[
-                    MDFlatButton(
-                        text="CANCEL", text_color=self.theme_cls.primary_color
-                    ),
-                    MDFlatButton(
-                        text="DISCARD", text_color=self.theme_cls.primary_color
-                    ),
-                ],
-            )
-        self.dialog.open()
+
+    def show_toast(self, text):
+        toast(text, 0.3)
 
 
 
 
 db = Database("users.txt")
-
 
 if __name__ == '__main__':
     login_app = MainApp()
