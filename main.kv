@@ -170,9 +170,15 @@ WindowManager:
                     right_action_items: [["logout", lambda x: root.logout()]]
                 BoxLayout:
                     size_hint: .8, .8
-                    pos_hint: {"center_x": 0.5, "center_y":0.5}
+                    pos_hint: {"center_x": 0.5, "center_y":0.1}
                     spacing: dp(30)
                     orientation: 'vertical'
+
+                    MDTextButton:
+                        text: "+ Add New List"
+                        pos_hint: {"center_x": .5, "center_y": .5}
+                        on_release: content.new_list()
+
 
                     ScrollView:
                         MDList:

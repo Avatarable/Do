@@ -156,7 +156,7 @@ class AccountPage(Screen):
         self.selected.append(item)
 
     def logout(self):
-        self.parent.master.acct.db.commit()
+        self.acct.db.commit()
         self.acct.db.close()
         login_app.root.current = "Login"
 
@@ -355,13 +355,6 @@ class ListScreen(Screen):
         self.dialog = None
 
 
-
-
-
-
-
-
-
 class WindowManager(ScreenManager):
     pass
 
@@ -388,9 +381,6 @@ class MainApp(MDApp):
 
     def show_toast(self, text):
         toast(text, 0.3)
-
-
-
 
 db = Database("users.txt")
 
